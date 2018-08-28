@@ -1,6 +1,7 @@
 buildscript {
     ext {
         springBootVersion = "1.4.2.RELEASE"
+        springVersion = "4.3.4.RELEASE"
     }
 
     repositories {
@@ -9,34 +10,30 @@ buildscript {
 
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+        classpath 'com.netflix.nebula:gradle-lint-plugin:latest.release'
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-apply plugin: "java"
 apply plugin: "war"
-apply plugin: "org.springframework.boot"
+apply plugin: 'nebula.lint'
+apply from: "./java.gradle"
 
 group = "org.superbiz"
 version = "1.1.0-SNAPSHOT"
 
 description = "OpenEJB :: Web Examples :: Moviefun"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+gradleLint.rules = ['all-dependency']
+gradleLint.rules += 'unused-dependency'
+
 
 dependencies {
     compile "taglibs:standard:1.1.2"
-    compile "org.springframework.boot:spring-boot-starter-web"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    //compile "org.springframework.boot:spring-boot-starter-web"
+    //compile "org.springframework.boot:spring-boot-starter-tomcat"
+    //compile "org.springframework.boot:spring-boot-starter-data-jpa"
     compile "mysql:mysql-connector-java:5.1.40"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.7.0"
-    compile "commons-lang:commons-lang:2.4"
-    compile "org.apache.tika:tika-core:1.14"
     compile "com.amazonaws:aws-java-sdk:1.11.74"
 
     compile "javax.servlet:jstl:1.2"
@@ -46,4 +43,42 @@ dependencies {
     compile "org.apache.geronimo.components:geronimo-jaspi:2.0.0"
 
     testCompile "junit:junit:4.12"
+}
+
+task dependenciesGraphDot {
+
+    mustRunAfter "customClean"
+
+    def graphBuildDir = "build/dependenciesGraph"
+    def dotFile = file "$graphBuildDir/graph.dot"
+
+    doLast {
+        delete graphBuildDir
+        mkdir graphBuildDir
+
+        dotFile << "digraph dependencies {\n"
+
+        project.subprojects.forEach { Project subProject ->
+            try {
+
+                Configuration compileConfig = subProject.configurations["compile"]
+
+                compileConfig
+                        .dependencies
+                        .grep { it.respondsTo("getDependencyProject") }
+                        .forEach { dotFile << """  "$subProject.name" -> "$it.dependencyProject.name"\n""" }
+            } catch (UnknownConfigurationException ignored) {
+            }
+        }
+        dotFile << "}\n"
+    }
+}
+
+task dependenciesGraph(dependsOn: "dependenciesGraphDot", type: Exec) {
+    workingDir "$project.buildDir/dependenciesGraph"
+    commandLine "dot", "-O", "-Tpng", "graph.dot"
+}
+
+task customClean(type: Delete) {
+    delete "build"
 }

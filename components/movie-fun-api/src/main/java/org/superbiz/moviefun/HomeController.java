@@ -2,7 +2,7 @@ package org.superbiz.moviefun;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.superbiz.moviefun.albums.AlbumsBean;
+import org.superbiz.moviefun.albumsapi.AlbumsClient;
 import org.superbiz.moviefun.albumsapi.AlbumFixtures;
 import org.superbiz.moviefun.albumsapi.AlbumInfo;
 import org.superbiz.moviefun.moviesapi.MovieFixtures;
@@ -15,13 +15,13 @@ import java.util.Map;
 public class HomeController {
 
     private final MoviesClient moviesClient;
-    private final AlbumsBean albumsBean;
+    private final AlbumsClient albumsClient;
     private final MovieFixtures movieFixtures;
     private final AlbumFixtures albumFixtures;
 
-    public HomeController(MoviesClient moviesClient, AlbumsBean albumsBean, MovieFixtures movieFixtures, AlbumFixtures albumFixtures) {
+    public HomeController(MoviesClient moviesClient, AlbumsClient albumsClient, MovieFixtures movieFixtures, AlbumFixtures albumFixtures) {
         this.moviesClient = moviesClient;
-        this.albumsBean = albumsBean;
+        this.albumsClient = albumsClient;
         this.movieFixtures = movieFixtures;
         this.albumFixtures = albumFixtures;
     }
@@ -35,14 +35,19 @@ public class HomeController {
     public String setup(Map<String, Object> model) {
         for (MovieInfo movie : movieFixtures.load()) {
             moviesClient.addMovie(movie);
+            System.out.println("#################"+movie);
         }
 
         for (AlbumInfo album : albumFixtures.load()) {
-            albumsBean.addAlbum(album);
+            System.out.println("@@@@@@@@@@@@@@@@");
+            albumsClient.addAlbum(album);
+            System.out.println("@@@@@@@@@@@@@@@@"+album);
         }
 
         model.put("movies", moviesClient.getMovies());
-        model.put("albums", albumsBean.getAlbums());
+        model.put("albums", albumsClient.getAlbums());
+
+        System.out.println("$$$$$$$$$$$$$ Before Setup");
 
         return "setup";
     }

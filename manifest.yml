@@ -8,14 +8,14 @@ applications:
 - name: album-service
   path: applications/album-service/build/libs/album-service-1.1.0-SNAPSHOT.jar
   services:
-  - album-database
+  - albums-database
   - moviefun-s3
   env:
     GRANT_TYPE: client_credentials
 - name: movie-service
   path: applications/movie-service/build/libs/movie-service-1.1.0-SNAPSHOT.jar
   services:
-  - movie-database
+  - movies-database
   env:
     GRANT_TYPE: client_credentials
 - name: movie-fun-app
@@ -23,6 +23,7 @@ applications:
   services:
   - movie-fun-config
   - moviefun-s3
+  - movie-fun-circuit-breaker
   env:
     ALBUMS_URL: http://album-service.cfapps-02.haas-66.pez.pivotal.io/albums
     MOVIES_URL: http://movie-service.cfapps-02.haas-66.pez.pivotal.io/movies
